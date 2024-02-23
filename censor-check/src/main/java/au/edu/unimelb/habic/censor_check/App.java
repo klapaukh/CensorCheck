@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.beust.jcommander.JCommander;
 
@@ -47,8 +49,21 @@ public class App
     }
 	
 	public void report() {
-		for (Record r : records) {
-			r.printStats();
+		Map<Category, ResultSet> results = new HashMap<>();
+		for (Record rec : records) {
+			var stats = rec.computeStats();
+			for (var row : stats.entrySet()) {
+				if (results.containsKey(row.getKey())) {
+					var soFar = results.get(row.getKey());
+					results.put(row.getKey(), soFar.add(row.getValue()));
+				} else {
+					results.put(row.getKey(), row.getValue());
+				}
+			}
+		}
+		
+		for (var row : results.entrySet()) {
+			System.out.printf("%s: %s\n", row.getKey(), row.getValue());
 		}
 	}
 	

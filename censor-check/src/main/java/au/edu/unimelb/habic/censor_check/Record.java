@@ -7,6 +7,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.BreakIterator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Record is a document that needs to be anonymised in part.
@@ -17,6 +21,8 @@ public class Record {
 	private String full_text;
 	private Annotation[] true_mask;
 	private Annotation[] test_mask;
+	private static final Category NONE = new Category("None");
+	private final Set<Category> allCategories;
 	
 	/** Create a new Record from a file on disk **/
 	public Record(File sourceFile) throws IOException {
@@ -39,6 +45,8 @@ public class Record {
 			reader.close();
 		}
 		full_text = builder.toString();
+		allCategories = new HashSet<>();
+		allCategories.add(NONE);
 		
 		// Create an arrays to track what should be masked and what has been			
 		true_mask = new Annotation[full_text.length()];
@@ -49,6 +57,8 @@ public class Record {
 	/** Create a new Record based on the data that would be stored on disk */
 	public Record(String filename, String contents) {
 		full_text = contents;
+		allCategories = new HashSet<>();
+		allCategories.add(NONE);
 		
 		// Create an arrays to track what should be masked and what has been			
 		true_mask = new Annotation[full_text.length()];
@@ -57,6 +67,7 @@ public class Record {
 	}
 	
 	public void addTrueMask(Annotation a) {
+		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
 			if (true_mask[i] != null) {
 				throw new MaskAlreadyExists(name, true_mask[i], a);
@@ -66,6 +77,7 @@ public class Record {
 	}
 	
 	public void addTestMask(Annotation a) {
+		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
 			if (test_mask[i] != null) {
 				throw new MaskAlreadyExists(name, test_mask[i], a);
@@ -100,28 +112,26 @@ public class Record {
 		return num_glyphs;
 	}
 	
-	public void printStats() {
-		int true_positives = 0;
-		int true_negatives = 0;
-		int false_positives = 0;
-		int false_negatives = 0;
-		int class_miss = 0;
+	public Map<Category, ResultSet> computeStats() {
+		Map<Category, ResultSet> resultsByClass = new HashMap<>();
+		for (Category cat : allCategories) {
+			resultsByClass.put(cat, new ResultSet());
+		}
 		for (int i=0; i < true_mask.length; i ++) {
 			if (true_mask[i] == null && test_mask[i] == null) {
-				true_negatives ++;
+				resultsByClass.get(NONE).addTrueNegative();
 			} else if (true_mask[i] == null && test_mask[i] != null) {
-				false_positives ++;
+				resultsByClass.get(test_mask[i].category).addFalsePositive();
 			} else if (true_mask[i] != null && test_mask[i] == null) {
-				false_negatives ++;
+				resultsByClass.get(true_mask[i].category).addFalseNegative();
 			} else {
-				true_positives ++;
-				if (!true_mask[i].equals(test_mask[i])) {
-					class_miss ++;
+				resultsByClass.get(true_mask[i].category).addTruePositive();
+				if (!true_mask[i].category.equals(test_mask[i].category)) {
+					resultsByClass.get(true_mask[i].category).addClassMiss();
 				}
 			}
 		}
 		
-		System.out.printf("%s has tp: %d fp: %d tn: %d fn: %d cm: %d and length: %d\n", this.name, true_positives, false_positives, true_negatives, false_negatives, class_miss, length());
-			
+		return resultsByClass;			
 	}
 }

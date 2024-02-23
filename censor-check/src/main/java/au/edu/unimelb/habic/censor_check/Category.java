@@ -8,11 +8,18 @@ public class Category {
 		this.category = string.toUpperCase();
 	}
 	
+	@Override
 	public String toString() {
 		return category;
 	}
 	
+	@Override
 	public boolean equals(Object other) {
 		return other instanceof Category && ((Category)other).category.equals(category);
+	}
+	
+	@Override
+	public int hashCode() {
+		return category.hashCode();
 	}
 }

@@ -17,6 +17,7 @@ public class Annotation {
 		rough_text = parts[4];
 	}
 	
+	@Override
 	public String toString() {
 		return String.format("<%s: %s @ %d -- %d: %s>", id, category, start, end, rough_text);
 	}
