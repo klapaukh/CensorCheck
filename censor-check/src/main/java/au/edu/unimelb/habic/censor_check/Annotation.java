@@ -9,12 +9,16 @@ public class Annotation {
 	public final String rough_text;
 	
 	public Annotation(String annotation) {
-		String[] parts = annotation.split("\\s+");
-		id = parts[0];
-		category = new Category(parts[1]);
-		start = Integer.parseInt(parts[2]);
-		end = Integer.parseInt(parts[3]);
-		rough_text = parts[4];
+		try {
+			String[] parts = annotation.split("\\s+", 5);
+			id = parts[0];
+			category = new Category(parts[1]);
+			start = Integer.parseInt(parts[2]);
+			end = Integer.parseInt(parts[3]);
+			rough_text = parts.length > 4 ? parts[4] : " ";
+		} catch (ArrayIndexOutOfBoundsException e) {
+			throw new RuntimeException("Failed to parse annotation " + annotation, e);
+		}
 	}
 	
 	@Override

@@ -3,6 +3,7 @@ package au.edu.unimelb.habic.censor_check.renderers;
 import java.util.Map;
 
 import au.edu.unimelb.habic.censor_check.Category;
+import au.edu.unimelb.habic.censor_check.Document;
 import au.edu.unimelb.habic.censor_check.ResultSet;
 
 public class HtmlRenderer {
@@ -20,7 +21,9 @@ public class HtmlRenderer {
 		ResultSet all = results.values().stream().reduce(new ResultSet(), (a ,b) -> a.add(b));
 		writeRow(output, "ALL", all);
 		for(var row : results.entrySet()) {
-			writeRow(output, row.getKey().toString(), row.getValue());
+			if(!row.getKey().equals(Document.NONE)) {
+				writeRow(output, row.getKey().toString(), row.getValue());
+			}
 		}
 		
 		output.append("</tbody>");

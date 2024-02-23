@@ -18,16 +18,16 @@ import au.edu.unimelb.habic.censor_check.renderers.HtmlRenderer;
 public class App 
 {
 //	private final Config config;
-	private final List<Record> records;
+	private final List<Document> records;
 	
 	public App(Config config) {
 //		this.config = config;
 
-        records = new ArrayList<Record>();
+        records = new ArrayList<Document>();
         for (FileTuple file : config.listFiles()) {
-        	Record record;
+        	Document record;
 			try {
-				record = new Record(file.fullTextFile);
+				record = new Document(file.fullTextFile);
 			} catch (IOException e) {
 				throw new RuntimeException("Could not read full text file " + file.fullTextFile.getAbsolutePath(), e);
 			}
@@ -52,7 +52,7 @@ public class App
 	
 	public void report() {
 		Map<Category, ResultSet> results = new HashMap<>();
-		for (Record rec : records) {
+		for (Document rec : records) {
 			var stats = rec.computeStats();
 			for (var row : stats.entrySet()) {
 				if (results.containsKey(row.getKey())) {

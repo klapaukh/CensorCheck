@@ -13,19 +13,19 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Record is a document that needs to be anonymised in part.
+ * A Document is a file that needs to be anonymised in part.
  */
-public class Record {
+public class Document {
 
 	private String name;
 	private String full_text;
 	private Annotation[] true_mask;
 	private Annotation[] test_mask;
-	private static final Category NONE = new Category("None");
 	private final Set<Category> allCategories;
+	public static final Category NONE = new Category("None");
 	
 	/** Create a new Record from a file on disk **/
-	public Record(File sourceFile) throws IOException {
+	public Document(File sourceFile) throws IOException {
 		if (!sourceFile.isFile() && sourceFile.canRead()) {
 			throw new FileNotFoundException(sourceFile.getAbsolutePath() + " is not a reable file");
 		}
@@ -55,7 +55,7 @@ public class Record {
 	}
 	
 	/** Create a new Record based on the data that would be stored on disk */
-	public Record(String filename, String contents) {
+	public Document(String filename, String contents) {
 		full_text = contents;
 		allCategories = new HashSet<>();
 		allCategories.add(NONE);
