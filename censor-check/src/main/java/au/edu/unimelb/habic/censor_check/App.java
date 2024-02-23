@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.beust.jcommander.JCommander;
 
+import au.edu.unimelb.habic.censor_check.renderers.HtmlRenderer;
+
 /**
  * Entrypoint for comparing text annotations.
  */
@@ -62,9 +64,7 @@ public class App
 			}
 		}
 		
-		for (var row : results.entrySet()) {
-			System.out.printf("%s: %s\n", row.getKey(), row.getValue());
-		}
+		System.out.println(HtmlRenderer.render(results));
 	}
 	
     public static void main( String[] args )
