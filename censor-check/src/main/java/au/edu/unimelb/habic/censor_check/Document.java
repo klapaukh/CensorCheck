@@ -66,6 +66,10 @@ public class Document {
 		name = filename;
 	}
 	
+	/**
+	 * Add a ground truth annotation to the document.
+	 * @param a The annotation
+	 */
 	public void addTrueMask(Annotation a) {
 		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
@@ -76,6 +80,10 @@ public class Document {
 		}
 	}
 	
+	/**
+	 * Add a test annotation to the document.
+	 * @param a The annotation
+	 */
 	public void addTestMask(Annotation a) {
 		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
@@ -86,8 +94,13 @@ public class Document {
 		}
 	}
 	
+	@Override
 	public String toString() {
+		// Don't print out the whole text if it's too long.
+		if (full_text.length() < 120) {
 		return full_text;
+		}
+		return String.format("%s...%s", full_text.substring(0, 80), full_text.substring(full_text.length() - 20));
 	}
 	
 	/**
