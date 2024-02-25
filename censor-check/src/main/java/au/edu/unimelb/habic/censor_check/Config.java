@@ -1,9 +1,13 @@
 package au.edu.unimelb.habic.censor_check;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import com.beust.jcommander.Parameter;
 
@@ -23,6 +27,9 @@ public class Config {
 	@Parameter(names = { "-t",
 			"--full-texts" }, description = "The path to the folder with original full texts", required = true)
 	private String fullTextDir;
+	
+	@Parameter(names = {"-c", "--config"}, description = "Path the categories config file if used")
+	private String categoriesConfig;
 
 	public static final String ANNOTATION_EXTENSION = ".ann";
 	public static final String TEXT_EXTENSION = ".txt";
@@ -67,5 +74,20 @@ public class Config {
 		}
 
 		return matchedFiles;
+	}
+	
+	public Map<String, String> loadCategoryConfig() {
+		Map<String, String> conf = new HashMap<>();
+		if (categoriesConfig != null) {
+			try (Scanner scan = new Scanner(new File(categoriesConfig))) {
+				String cat = scan.next();
+				scan.skip("\\s*allow\\s*=");
+				String allowRegex = scan.nextLine().trim();
+				conf.put(cat, allowRegex);
+			} catch (IOException e) {
+				System.err.printf("Failed to load category config file: %s\n", categoriesConfig);
+			}
+		}
+		return conf;
 	}
 }

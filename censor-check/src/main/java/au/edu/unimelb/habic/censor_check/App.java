@@ -17,12 +17,12 @@ import au.edu.unimelb.habic.censor_check.renderers.HtmlRenderer;
  */
 public class App 
 {
-//	private final Config config;
+	private final Map<String, String> allowGroups;
 	private final List<Document> records;
 	
 	public App(Config config) {
-//		this.config = config;
-
+		// First you need to read the annotations config
+		allowGroups = config.loadCategoryConfig();
         records = new ArrayList<Document>();
         for (FileTuple file : config.listFiles()) {
         	Document record;
@@ -53,10 +53,10 @@ public class App
 	public void report() {
 		Map<Category, ResultSet> results = new HashMap<>();
 		for (Document rec : records) {
-			var stats = rec.computeStats();
-			for (var row : stats.entrySet()) {
+			Map<Category, ResultSet> stats = rec.computeStats(allowGroups);
+			for (Map.Entry<Category, ResultSet> row : stats.entrySet()) {
 				if (results.containsKey(row.getKey())) {
-					var soFar = results.get(row.getKey());
+					ResultSet soFar = results.get(row.getKey());
 					results.put(row.getKey(), soFar.add(row.getValue()));
 				} else {
 					results.put(row.getKey(), row.getValue());

@@ -98,7 +98,7 @@ public class Document {
 	public String toString() {
 		// Don't print out the whole text if it's too long.
 		if (full_text.length() < 120) {
-		return full_text;
+			return full_text;
 		}
 		return String.format("%s...%s", full_text.substring(0, 80), full_text.substring(full_text.length() - 20));
 	}
@@ -125,7 +125,7 @@ public class Document {
 		return num_glyphs;
 	}
 	
-	public Map<Category, ResultSet> computeStats() {
+	public Map<Category, ResultSet> computeStats(Map<String, String> categoryExceptions) {
 		Map<Category, ResultSet> resultsByClass = new HashMap<>();
 		for (Category cat : allCategories) {
 			resultsByClass.put(cat, new ResultSet());
