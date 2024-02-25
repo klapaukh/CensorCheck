@@ -20,7 +20,7 @@ public class HtmlRenderer {
 		
 		ResultSet all = results.values().stream().reduce(new ResultSet(), (a ,b) -> a.add(b));
 		writeRow(output, "ALL", all);
-		for(var row : results.entrySet()) {
+		for(Map.Entry<Category, ResultSet> row : results.entrySet()) {
 			if(!row.getKey().equals(Document.NONE)) {
 				writeRow(output, row.getKey().toString(), row.getValue());
 			}
@@ -40,9 +40,17 @@ public class HtmlRenderer {
 		builder.append("</td>");
 		
 		builder.append("<td>");
-		builder.append(results.truePositives());
+		builder.append(String.format("%.4f", (double)results.truePositives() / (double)(results.truePositives() + results.falseNegative())));
 		builder.append("</td>");
 		
+		builder.append("<td>");
+		builder.append(String.format("%.4f", (double)results.truePositives() / (double)(results.truePositives() + results.falsePositive())));
+		builder.append("</td>");
+				
+		builder.append("<td>");
+		builder.append(results.truePositives());
+		builder.append("</td>");
+				
 		builder.append("<td>");
 		builder.append(results.classMiss());
 		builder.append("</td>");
@@ -71,6 +79,14 @@ public class HtmlRenderer {
 		
 		builder.append("<td>");
 		builder.append("Category");
+		builder.append("</td>");
+	
+		builder.append("<td>");
+		builder.append("Recall");
+		builder.append("</td>");
+		
+		builder.append("<td>");
+		builder.append("Precision");
 		builder.append("</td>");
 		
 		builder.append("<td>");
