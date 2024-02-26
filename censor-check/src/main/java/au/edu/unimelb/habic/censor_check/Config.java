@@ -27,8 +27,8 @@ public class Config {
 	@Parameter(names = { "-t",
 			"--full-texts" }, description = "The path to the folder with original full texts", required = true)
 	private String fullTextDir;
-	
-	@Parameter(names = {"-c", "--config"}, description = "Path the categories config file if used")
+
+	@Parameter(names = { "-c", "--config" }, description = "Path the categories config file if used")
 	private String categoriesConfig;
 
 	public static final String ANNOTATION_EXTENSION = ".ann";
@@ -75,15 +75,17 @@ public class Config {
 
 		return matchedFiles;
 	}
-	
+
 	public Map<String, String> loadCategoryConfig() {
 		Map<String, String> conf = new HashMap<>();
 		if (categoriesConfig != null) {
 			try (Scanner scan = new Scanner(new File(categoriesConfig))) {
-				String cat = scan.next();
-				scan.skip("\\s*allow\\s*=");
-				String allowRegex = scan.nextLine().trim();
-				conf.put(cat, allowRegex);
+				while (scan.hasNext()) {
+					String cat = scan.next();
+					scan.skip("\\s*allow\\s*=");
+					String allowRegex = scan.nextLine().trim();
+					conf.put(cat.toUpperCase(), allowRegex);
+				}
 			} catch (IOException e) {
 				System.err.printf("Failed to load category config file: %s\n", categoriesConfig);
 			}

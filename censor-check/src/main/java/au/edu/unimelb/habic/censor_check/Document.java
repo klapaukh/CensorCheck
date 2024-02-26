@@ -22,7 +22,6 @@ public class Document {
 	private Annotation[] true_mask;
 	private Annotation[] test_mask;
 	private final Set<Category> allCategories;
-	public static final Category NONE = new Category("None");
 	
 	/** Create a new Record from a file on disk **/
 	public Document(File sourceFile) throws IOException {
@@ -46,11 +45,18 @@ public class Document {
 		}
 		full_text = builder.toString();
 		allCategories = new HashSet<>();
-		allCategories.add(NONE);
+		allCategories.add(Category.NONE);
 		
 		// Create an arrays to track what should be masked and what has been			
 		true_mask = new Annotation[full_text.length()];
 		test_mask = new Annotation[full_text.length()];
+		
+		// Fill them with Nones
+		for (int i=0; i<full_text.length(); i++) {
+			true_mask[i] = Annotation.NONE;
+			test_mask[i] = Annotation.NONE;
+		}
+		
 		name = sourceFile.getName();
 	}
 	
@@ -58,11 +64,17 @@ public class Document {
 	public Document(String filename, String contents) {
 		full_text = contents;
 		allCategories = new HashSet<>();
-		allCategories.add(NONE);
+		allCategories.add(Category.NONE);
 		
 		// Create an arrays to track what should be masked and what has been			
 		true_mask = new Annotation[full_text.length()];
 		test_mask = new Annotation[full_text.length()];
+		
+		for (int i=0; i<full_text.length(); i++) {
+			true_mask[i] = Annotation.NONE;
+			test_mask[i] = Annotation.NONE;
+		}
+		
 		name = filename;
 	}
 	
@@ -73,7 +85,7 @@ public class Document {
 	public void addTrueMask(Annotation a) {
 		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
-			if (true_mask[i] != null) {
+			if (true_mask[i] != Annotation.NONE) {
 				throw new MaskAlreadyExists(name, true_mask[i], a);
 			}
 			true_mask[i] = a;
@@ -87,7 +99,7 @@ public class Document {
 	public void addTestMask(Annotation a) {
 		allCategories.add(a.category);
 		for (int i = a.start; i < a.end; i++) {
-			if (test_mask[i] != null) {
+			if (test_mask[i] != Annotation.NONE) {
 				throw new MaskAlreadyExists(name, test_mask[i], a);
 			}
 			test_mask[i] = a;
@@ -126,23 +138,14 @@ public class Document {
 	}
 	
 	public Map<Category, ResultSet> computeStats(Map<String, String> categoryExceptions) {
+		// This method shouldn't change the data. If you rerun it with different exceptions,
+		// it should work
 		Map<Category, ResultSet> resultsByClass = new HashMap<>();
 		for (Category cat : allCategories) {
 			resultsByClass.put(cat, new ResultSet());
 		}
 		for (int i=0; i < true_mask.length; i ++) {
-			if (true_mask[i] == null && test_mask[i] == null) {
-				resultsByClass.get(NONE).addTrueNegative();
-			} else if (true_mask[i] == null && test_mask[i] != null) {
-				resultsByClass.get(test_mask[i].category).addFalsePositive();
-			} else if (true_mask[i] != null && test_mask[i] == null) {
-				resultsByClass.get(true_mask[i].category).addFalseNegative();
-			} else {
-				resultsByClass.get(true_mask[i].category).addTruePositive();
-				if (!true_mask[i].category.equals(test_mask[i].category)) {
-					resultsByClass.get(true_mask[i].category).addClassMiss();
-				}
-			}
+			true_mask[i].assigned(test_mask[i], full_text.substring(i, i+1), resultsByClass, categoryExceptions);
 		}
 		
 		return resultsByClass;			
