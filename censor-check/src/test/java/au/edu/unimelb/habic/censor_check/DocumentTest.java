@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for Record
  */
-public class RecordTest 
+public class DocumentTest 
 {
     /**
-     * Test that overlaps in records throw exceptions
+     * Test that overlaps in Documents throw exceptions
      */
 	@Test
     public void testOverlap()
