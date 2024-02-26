@@ -15,41 +15,50 @@ import au.edu.unimelb.habic.censor_check.renderers.HtmlRenderer;
 /**
  * Entrypoint for comparing text annotations.
  */
-public class App 
-{
+public class App {
 	private final Map<String, String> allowGroups;
 	private final List<Document> records;
-	
+
+	/**
+	 * Load in the documents and annotations.
+	 * 
+	 * @param config Configuration data for the analysis.
+	 */
 	public App(Config config) {
 		// First you need to read the annotations config
 		allowGroups = config.loadCategoryConfig();
-        records = new ArrayList<Document>();
-        for (FileTuple file : config.listFiles()) {
-        	Document record;
+		records = new ArrayList<Document>();
+		for (FileTuple file : config.listFiles()) {
+			Document record;
 			try {
 				record = new Document(file.fullTextFile);
 			} catch (IOException e) {
 				throw new RuntimeException("Could not read full text file " + file.fullTextFile.getAbsolutePath(), e);
 			}
-        	
-        	// Read the true annotations
-        	try (BufferedReader reader = new BufferedReader(new FileReader(file.groundTruthFile))) {
-        		reader.lines().map(Annotation::new).forEach(a -> record.addTrueMask(a));
+
+			// Read the true annotations
+			try (BufferedReader reader = new BufferedReader(new FileReader(file.groundTruthFile))) {
+				reader.lines().map(Annotation::new).forEach(a -> record.addTrueMask(a));
 			} catch (IOException e) {
-				throw new RuntimeException("Could not read ground truth file " + file.groundTruthFile.getAbsolutePath(), e);
+				throw new RuntimeException("Could not read ground truth file " + file.groundTruthFile.getAbsolutePath(),
+						e);
 			}
-        	
-        	// Read the test annotation
-        	try (BufferedReader reader = new BufferedReader(new FileReader(file.testAnnotationsFile))) {
-        		reader.lines().map(Annotation::new).forEach(a -> record.addTestMask(a));
-        	} catch (IOException e) {
-				throw new RuntimeException("Could not read test annotations file " + file.testAnnotationsFile.getAbsolutePath(), e);
+
+			// Read the test annotation
+			try (BufferedReader reader = new BufferedReader(new FileReader(file.testAnnotationsFile))) {
+				reader.lines().map(Annotation::new).forEach(a -> record.addTestMask(a));
+			} catch (IOException e) {
+				throw new RuntimeException(
+						"Could not read test annotations file " + file.testAnnotationsFile.getAbsolutePath(), e);
 			}
-        	
-        	records.add(record);
-        }
-    }
-	
+
+			records.add(record);
+		}
+	}
+
+	/**
+	 * Create and emit a report showing the results.
+	 */
 	public void report() {
 		Map<Category, ResultSet> results = new HashMap<>();
 		for (Document rec : records) {
@@ -63,19 +72,20 @@ public class App
 				}
 			}
 		}
-		
+
 		System.out.println(HtmlRenderer.render(results));
 	}
-	
-    public static void main( String[] args )
-    {
-    	Config config = new Config();
-    	JCommander.newBuilder()
-    		.addObject(config)
-    		.build()
-    		.parse(args);
-    	App app = new App(config);
-    	app.report();
-    }
+
+	/**
+	 * Main entrypoint for the application
+	 * 
+	 * @param args Command line arguments
+	 */
+	public static void main(String[] args) {
+		Config config = new Config();
+		JCommander.newBuilder().addObject(config).build().parse(args);
+		App app = new App(config);
+		app.report();
+	}
 
 }

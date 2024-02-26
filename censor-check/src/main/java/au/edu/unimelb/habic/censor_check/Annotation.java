@@ -19,6 +19,10 @@ public class Annotation {
 	public final int end;
 	public final String rough_text;
 	
+	/**
+	 * Create an annotation from brat standoff.
+	 * @param annotation The annotation text
+	 */
 	public Annotation(String annotation) {
 		try {
 			String[] parts = annotation.split("\\s+", 5);
@@ -32,6 +36,14 @@ public class Annotation {
 		}
 	}
 	
+	/**
+	 * Create a new annotation from its data.
+	 * @param id The annotation id. Can be any value. Only used for error messages
+	 * @param category The category assigned
+	 * @param start Start character index (inclusive)
+	 * @param end End character index (exclusive)
+	 * @param rough_text What the real text in the annotation is. Does not need to be right, only used for error messages
+	 */
 	public Annotation(String id, Category category, int start, int end, String rough_text) {
 		this.id = id;
 		this.category = category;
@@ -45,9 +57,23 @@ public class Annotation {
 		return String.format("<%s: %s @ %d -- %d: %s>", id, category, start, end, rough_text);
 	}
 
+	
+	/**
+	 * Given that this annotation is marked as ground truth for text (the current character under inspection),
+	 * and the method under test has marked this character other, change the results by class to match the correct
+	 * behaviour.
+	 * @param other The annotation (hence category) under test.
+	 * @param text The character in the source text.
+	 * @param resultsByClass The results so far broken down by category.
+	 * @param categoryExceptions The regexes for different categories for what they are allowed to ignore.
+	 */
 	public void assigned(Annotation other, String text, Map<Category, ResultSet> resultsByClass, Map<String, String> categoryExceptions) {
-		if (category.equals(Category.NONE)) {
-			if (other.category.equals(Category.NONE) || this.category.allow(text, categoryExceptions)) {
+		
+		if(this.category.skip(text, categoryExceptions)) {
+			// If this is an exception token, it's always a true negative - free points
+			resultsByClass.get(Category.NONE).addTrueNegative();		
+		} else if (category.equals(Category.NONE)) {
+			if (other.category.equals(Category.NONE)) {
 				// True negative
 				resultsByClass.get(this.category).addTrueNegative();				
 			} else {

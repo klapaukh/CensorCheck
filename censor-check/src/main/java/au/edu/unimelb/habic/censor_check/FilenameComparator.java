@@ -8,6 +8,9 @@ import java.util.Comparator;
  */
 public class FilenameComparator implements Comparator<File> {
 
+	/** 
+	 * Extension to find the extension (including leading dot) of a filename.
+	 */
 	public static final String EXTENSION_REGEX= "\\.[^.]+$";
 	
 	@Override

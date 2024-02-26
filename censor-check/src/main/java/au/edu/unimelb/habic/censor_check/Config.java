@@ -31,9 +31,20 @@ public class Config {
 	@Parameter(names = { "-c", "--config" }, description = "Path the categories config file if used")
 	private String categoriesConfig;
 
+	/**
+	 * File extension for annotation files.
+	 */
 	public static final String ANNOTATION_EXTENSION = ".ann";
+	/**
+	 * File extension for raw files.
+	 */
 	public static final String TEXT_EXTENSION = ".txt";
 
+	/**
+	 * Get a list of all the files to check. This returns a list of raw input files with their matched
+	 * annotations. Membership is based on having an input file.
+	 * @return A list of raw input files with ground truth and evaluation files if present.
+	 */
 	public List<FileTuple> listFiles() {
 		// Find all the possible files
 		File[] gt = new File(groundTruthDir)
@@ -76,6 +87,10 @@ public class Config {
 		return matchedFiles;
 	}
 
+	/**
+	 * Read the regexes to ignore for the defined categories.
+	 * @return Map of category name to ignore regex.
+	 */
 	public Map<String, String> loadCategoryConfig() {
 		Map<String, String> conf = new HashMap<>();
 		if (categoriesConfig != null) {

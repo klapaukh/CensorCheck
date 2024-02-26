@@ -21,7 +21,7 @@ public class Document {
 	private String full_text;
 	private Annotation[] true_mask;
 	private Annotation[] test_mask;
-	private final Set<Category> allCategories;
+	private Set<Category> allCategories;
 	
 	/** Create a new Record from a file on disk **/
 	public Document(File sourceFile) throws IOException {
@@ -43,25 +43,21 @@ public class Document {
 		} finally {
 			reader.close();
 		}
-		full_text = builder.toString();
-		allCategories = new HashSet<>();
-		allCategories.add(Category.NONE);
 		
-		// Create an arrays to track what should be masked and what has been			
-		true_mask = new Annotation[full_text.length()];
-		test_mask = new Annotation[full_text.length()];
-		
-		// Fill them with Nones
-		for (int i=0; i<full_text.length(); i++) {
-			true_mask[i] = Annotation.NONE;
-			test_mask[i] = Annotation.NONE;
-		}
-		
-		name = sourceFile.getName();
+		this.init(sourceFile.getName(), builder.toString());
 	}
 	
 	/** Create a new Record based on the data that would be stored on disk */
 	public Document(String filename, String contents) {
+		this.init(filename, contents);
+	}
+	
+	/**
+	 * Initialise the internal structure of the Document no matter how it was created.
+	 * @param filename The filename of the source document.
+	 * @param contents The full text of the document.
+	 */
+	private void init(String filename, String contents) {
 		full_text = contents;
 		allCategories = new HashSet<>();
 		allCategories.add(Category.NONE);
@@ -137,6 +133,12 @@ public class Document {
 		return num_glyphs;
 	}
 	
+	/**
+	 * Compute how well masked the hidden information is and return it as a table.
+	 * Note that this will add a new class called "ALL" which contains the summary data.
+	 * @param categoryExceptions Regexes which are allowed to be ignored for each class
+	 * @return A map of category to stats.
+	 */
 	public Map<Category, ResultSet> computeStats(Map<String, String> categoryExceptions) {
 		// This method shouldn't change the data. If you rerun it with different exceptions,
 		// it should work
