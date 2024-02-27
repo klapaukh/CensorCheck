@@ -5,6 +5,35 @@ This is a tool to see how much information is leaking from a censored text.
 To compile it use: `mvn package` from the main directory (the one with `pom.xml`).
 The tool can then be run with `java -jar .\target\censor-check-1.jar`.
 
+The tool requires the arguments:
+ - `-g` the folder which contains the ground truth files (`.ann`)
+ - `-e` the folder which contains the annotation to test files (`.ann`)
+ - `-t` the folder which contains the UTF-8 full text documents (`.txt`)
+ - and optionally `-c` the configuration file 
+
+## Configuration
+
+Category configuration can be done in a conf file provided by the `-c` argument.
+The format of the file has each class on a separate line as:
+```
+CATEGORY_NAME allow=REGEX
+```
+If you do not have an allow regex to declare, then there is no need to declare the
+`CATEGORY_NAME`. Any kind of space can be used.
+
+Characters matched by the allow regex will always be treated as true negatives.
+This stops formatting characters from reducing the scores in irrelevant to human ways.
+
+Where a character matches the regex assigned to the special class `ALL` it will always
+be considered a true negative when part of any annotation type. Regexes assigned to
+other used classes have the same effect, but only for their class. If a class regex
+fails it will then try the `ALL` regex. This ensures that missing non informative
+parts of annotations is not penalised.
+
+Similarly the `NONE` annotation prevents false positives from being overly penalised.
+The regex for `NONE` describes the characters which will count as a true negative
+even when part of what would otherwise be a false positive result. This prevents 
+universally meaningless characters from bringing up the false positive rate.
 
 ## Algorithm details
 
@@ -50,32 +79,40 @@ ideal.
 
 Now we find that method 2 is better than method 1. Still not what we want.
 
-#### Removed allowed skipped from denominator and numerator globally
-
-- Ground truth: `Inigo Montoya` = 12 characters (ignoring the 1 space)
-- Method 1: `Inigo Montoy` = 11 characters (we now need to skip the space) => recall = 11 / 12
-- Method 2: `Inigo` + `Montoy` = 5 + 6 = 11 characters = 11 / 12
-
-These now match which is correct.
-
 #### Add allowed skipped to numerator if missed
 
 - Ground truth: `Inigo Montoya` = 13 characters (ignoring the 1 space)
 - Method 1: `Inigo Montoy` = 12 characters (we now need to skip the space) => recall = 12 / 13
 - Method 2: `Inigo` + `Montoy` = 5 + 6 + 1 (free space) = 12 characters = 12 / 13
 
-These also match.
+These results match. But they aren't entirely satisfying as we are still counting
+the contribution of the characters that we've classed as non-disclosive.
 
+#### Removed allowed skipped from denominator and numerator globally
 
-#### Summary
+- Ground truth: `Inigo Montoya` = 12 characters (ignoring the 1 space)
+- Method 1: `Inigo Montoy` = 11 characters (we now need to skip the space) => recall = 11 / 12
+- Method 2: `Inigo` + `Montoy` = 5 + 6 = 11 characters = 11 / 12
 
-This gives us two methods that both give result that align equally well with our needs for false negatives.
-How do these two method work for false positives?
+These results also match. But this method feels more sensible as, since we 
+are saying that these token don't matter, they shouldn't be part of the count at all.
 
-Suppose a space character is marked as a name, but it is just a white space. Should it count as a misclassification?
-It's pretty easy to handle, and is the kind of error that not all parsers can generate (since may strip out spaces
-when creating tokens). How about a bracket classified as a phone number? Missing a bracket from a phone number may not
-be a big deal, but eating one not inside of one is a bigger issue.  
+#### False positives
+
+Given that we now have a method for handling false negatives, we need to a consider a similar
+scheme for false positive. In general the non-disclosive characters as part of an identifier
+are not necessary characters that are okay to strip out of normal text with no loss. For example,
+consider a bracket classified as a phone number. Leaving behind a bracket from a phone number may not
+be a big deal, but removing from from free text may change the meaning. 
+
+For example, consider a phone number detector running on "Sam Smith (nee Janice) attended her appointment". 
+The correct answer is that there is no phone number there. However, suppose that an algorithm classified 
+`(nee Janice)` as a phone number. Well you can forgive the `()` not being picked up within an actual phone
+number, since they aren't really part of it. They are just formatting. But here censoring with / without them
+changes what the end user can see. Language-wise there is a big difference between losing a word, and losing the
+contents of a bracketed expression (since those are typically not part of the main sentence). This means that 
+we cannot use categories "okay to skip" character when dealing with false positives. 
+
 
 If we do something simple like strip out allowed skip characters from the annotation records where they match, that will
 prevents methods from getting different scored from how they handle whitespace. Suppose `Inigo Montoya` was a false positive.
@@ -83,42 +120,6 @@ Should you be penalised 12 or 13 characters (since all of that would be lost whe
 you may benefit 12 or 13 if you get it right. And false positives should be treated the same as true positives. Otherwise
 information is being valued differently in different contexts which isn't right. 
 
-I think it makes more sense to forgive missed characters i.e., the unneeded characters like spaces are essentially given
-for free when missed. Because this makes it easier to be clear as so what happens in the case of false positives (all
-characters count). Unfortunately, this means that algorithms that produce split results (e.g. give the name in parts)
-will typically have slightly lower false positive rates (since they don't always emit them). Otherwise false positives 
-are hard to calculate. 
-
-For example, consider a phone number detector running on "Sam Smith (nee Janice) attended her appointment". 
-The correct answer is that there is no phone number there. However, suppose that an algorithm classified 
-`(nee Janice)` as a phone number. Well you can forgive the `()` not being picked up within an actual phone
-number, since they aren't really part of it. They are just formatting. But here censoring with / without them
-changes what the end user can see. Language-wise there is a big difference between losing a word, and losing the
-contents of a bracketed expression (since those are typically not part of the main sentence). But if it was a phone
-number and it missed them it would get them for free as gimme points. 
-
-Is it conceptually different if the concept was missed entirely. If you don't get the name `Inigo Montoya` should
-you then be penalised for the space? Since the kind of "fill in rule" doesn't make as much sense if you didn't
-even realise there was a name there in the first place. But equally the space escaping censorship isn't the problem.
-It's the actual letters on either side that matter. 
-
-Also what do we do with the skipped characters? Add them to the true negative total? Remove them from the running?
-
-The purpose of these numbers is that they are supposed to be both meaningful to creators of algorithms, but also
-to their intended purpose. If the numbers say that everything was identified and nothing was unnecessarily censored.
-Those two statements go to different audience. Those who generate and own the data care about the false positives.
-Justifying formatting characters being missed feels acceptable - we aren't trying to hide that information was there. Only
-its actual value. While in where data is unnecessarily censored the original value of the data isn't the only thing
-to consider. It also matters how the flow of language may be disrupted. Because this is for an audience that will
-consume this data. In that case having a `(` classified as a phone number is a problem (even if it being missed
-wouldn't be), since that token could be removed in a way that harms the rest of the data. So it is okay to treat
-these cases differently. 
-
-What characters are okay to ignore depends on the user configuration (since it can easily be problem specific).
-These characters are declared against the category definitions in the configuration. There is also a special
-category called `ALL` which applies to all categories. There can be categories where even missing whitespace
-could be meaningful. Or where only numeric characters matter at all. Category mismatches aren't significantly
-penalised. The only real false positive case is no category to assigned category. Which makes the true class
-of the data `NONE` (the other special class). So we can assign a regex to the `NONE` class to specify what
-characters we don't need to penalise for false positives (which will often be just whitespace, to bring word
-by word and multiple word in one go methods into line).  
+Instead we choose to leave this decision up to the user. Since this will ultimately depend on their use case.
+A regex can be assigned to the category `NONE`, and any matches will always count as true negatives. I.e. their
+loss is not important (consider say the detection of lone whitespace).
