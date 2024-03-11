@@ -80,11 +80,15 @@ public class Document {
 	 */
 	public void addTrueMask(Annotation a) {
 		allCategories.add(a.category);
+		String message = null;
 		for (int i = a.start; i < a.end; i++) {
-			if (true_mask[i] != Annotation.NONE) {
-				throw new MaskAlreadyExists(name, true_mask[i], a);
+			if (message == null && true_mask[i] != Annotation.NONE) {
+				message = String.format("%s has overlapping annotations %s and %s", name, true_mask[i], a);
 			}
 			true_mask[i] = a;
+		}
+		if (message != null) {
+			System.err.println(message);
 		}
 	}
 	
@@ -94,11 +98,15 @@ public class Document {
 	 */
 	public void addTestMask(Annotation a) {
 		allCategories.add(a.category);
+		String message = null;
 		for (int i = a.start; i < a.end; i++) {
-			if (test_mask[i] != Annotation.NONE) {
-				throw new MaskAlreadyExists(name, test_mask[i], a);
+			if (message == null && test_mask[i] != Annotation.NONE) {
+				message = String.format("%s has overlapping annotations %s and %s", name, true_mask[i], a);
 			}
 			test_mask[i] = a;
+		}
+		if (message != null) {
+			System.err.println(message);
 		}
 	}
 	

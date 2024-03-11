@@ -11,6 +11,9 @@ The tool requires the arguments:
  - `-t` the folder which contains the UTF-8 full text documents (`.txt`)
  - and optionally `-c` the configuration file 
 
+Note that were a character is part of several annotations, the calculation is
+done using the final annotation as listed in the `.ann` file.
+
 ## Configuration
 
 Category configuration can be done in a conf file provided by the `-c` argument.
