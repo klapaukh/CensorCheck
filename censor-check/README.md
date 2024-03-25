@@ -18,12 +18,20 @@ done using the final annotation as listed in the `.ann` file.
 
 All annotations for a file `xyz.txt` should be in a matching `xyz.ann` file.
 The `ann` file must have each annotation of a separate line. 
-Each line is formatted as: `Id Category Start_Idx End_Idx match`.
-`Id` and `Category` cannot contain spaces. `Id` and `match` are 
-not used by the algorithm. They are there to make errors easier to read.
-The `Start_idx` is inclusive while `End_Idx` is exclusive. Both 
-indexes are 0 based and count Unicode glyphs (displayed symbols), 
+Each line is formatted as: 
+
+```
+Id Category Start_Idx End_Idx match
+```
+
+ - Any kind of whitespace can be used as a separator. Also any number of 
+ whitespace characters.
+ - `Id` and `Category` cannot contain spaces.
+ - `Id` and `match` are not used by the algorithm. They are there to make errors easier to read.
+ - `Start_idx` is inclusive while `End_Idx` is exclusive.
+ -  Both indexes are 0 based and count Unicode glyphs (displayed symbols), 
 not characters or code points. If you are only using ASCII then these will be the same.
+ - Brat `ann` notation for entities matches this format.
 
 ## Configuration
 
