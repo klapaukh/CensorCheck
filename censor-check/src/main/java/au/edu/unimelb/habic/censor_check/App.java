@@ -38,7 +38,7 @@ public class App {
 
 			// Read the true annotations
 			try (BufferedReader reader = new BufferedReader(new FileReader(file.groundTruthFile))) {
-				reader.lines().map(Annotation::new).forEach(a -> record.addTrueMask(a));
+				reader.lines().filter(x-> !x.trim().isEmpty()).map(Annotation::new).forEach(a -> record.addTrueMask(a));
 			} catch (IOException e) {
 				throw new RuntimeException("Could not read ground truth file " + file.groundTruthFile.getAbsolutePath(),
 						e);
@@ -46,7 +46,7 @@ public class App {
 
 			// Read the test annotation
 			try (BufferedReader reader = new BufferedReader(new FileReader(file.testAnnotationsFile))) {
-				reader.lines().map(Annotation::new).forEach(a -> record.addTestMask(a));
+				reader.lines().filter(x-> !x.trim().isEmpty()).map(Annotation::new).forEach(a -> record.addTestMask(a));
 			} catch (IOException e) {
 				throw new RuntimeException(
 						"Could not read test annotations file " + file.testAnnotationsFile.getAbsolutePath(), e);
