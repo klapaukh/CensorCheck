@@ -7,20 +7,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.BreakIterator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * A Document is a file that needs to be anonymised in part.
+ * A Document is a file that needs to have tokens identified in it.
  */
 public class Document {
 
 	private String name;
-	private String full_text;
-	private Annotation[] true_mask;
-	private Annotation[] test_mask;
+	private List<String> fullText;
+	private Annotation[] trueMask;
+	private Annotation[] testMask;
 	private Set<Category> allCategories;
 	
 	/** Create a new Record from a file on disk **/
@@ -58,17 +60,24 @@ public class Document {
 	 * @param contents The full text of the document.
 	 */
 	private void init(String filename, String contents) {
-		full_text = contents;
+		fullText = new ArrayList<>();
+		
+		BreakIterator boundary = BreakIterator.getCharacterInstance();
+		boundary.setText(contents);
+		for(int start = boundary.first(), end = boundary.next(); end != BreakIterator.DONE; start = end, end = boundary.next()) {
+			fullText.add(contents.substring(start, end));
+		}
+		
 		allCategories = new HashSet<>();
 		allCategories.add(Category.NONE);
 		
 		// Create an arrays to track what should be masked and what has been			
-		true_mask = new Annotation[full_text.length()];
-		test_mask = new Annotation[full_text.length()];
+		trueMask = new Annotation[fullText.size()];
+		testMask = new Annotation[fullText.size()];
 		
-		for (int i=0; i<full_text.length(); i++) {
-			true_mask[i] = Annotation.NONE;
-			test_mask[i] = Annotation.NONE;
+		for (int i=0; i < trueMask.length; i++) {
+			trueMask[i] = Annotation.NONE;
+			testMask[i] = Annotation.NONE;
 		}
 		
 		name = filename;
@@ -82,10 +91,10 @@ public class Document {
 		allCategories.add(a.category);
 		String message = null;
 		for (int i = a.start; i < a.end; i++) {
-			if (message == null && true_mask[i] != Annotation.NONE) {
-				message = String.format("%s has overlapping annotations %s and %s", name, true_mask[i], a);
+			if (message == null && trueMask[i] != Annotation.NONE) {
+				message = String.format("%s has overlapping annotations %s and %s", name, trueMask[i], a);
 			}
-			true_mask[i] = a;
+			trueMask[i] = a;
 		}
 		if (message != null) {
 			System.err.println(message);
@@ -100,10 +109,10 @@ public class Document {
 		allCategories.add(a.category);
 		String message = null;
 		for (int i = a.start; i < a.end; i++) {
-			if (message == null && test_mask[i] != Annotation.NONE) {
-				message = String.format("%s has overlapping annotations %s and %s", name, true_mask[i], a);
+			if (message == null && testMask[i] != Annotation.NONE) {
+				message = String.format("%s has overlapping annotations %s and %s", name, trueMask[i], a);
 			}
-			test_mask[i] = a;
+			testMask[i] = a;
 		}
 		if (message != null) {
 			System.err.println(message);
@@ -113,32 +122,19 @@ public class Document {
 	@Override
 	public String toString() {
 		// Don't print out the whole text if it's too long.
-		if (full_text.length() < 120) {
-			return full_text;
+		if (fullText.size() < 120) {
+			return fullText.stream().reduce("", String::join);
 		}
-		return String.format("%s...%s", full_text.substring(0, 80), full_text.substring(full_text.length() - 20));
+		return String.format("%s...%s", fullText.subList(0, 80).stream().reduce("", String::join), fullText.subList(fullText.size() - 20, fullText.size()).stream().reduce("", String::join));
 	}
 	
 	/**
-	 * The UTF-16 character length of the text.
+	 * The number of glyphs that get drawn to render this text.
+	 * This maybe less than the number of Java chars or Unicode codepoints.
 	 * @return String length
 	 */
 	public int length() {
-		return true_mask.length;
-	}
-	
-	/**
-	 * The length of the record in glyphs. This is generally the same as the length for western languages.
-	 * @return Number of glyphs in the document
-	 */
-	public int glyph_length() {
-		BreakIterator iter = BreakIterator.getCharacterInstance();
-		iter.setText(full_text);
-		int num_glyphs = 0;
-		while(iter.next() != BreakIterator.DONE) {
-			num_glyphs ++;
-		}
-		return num_glyphs;
+		return fullText.size();
 	}
 	
 	/**
@@ -154,8 +150,8 @@ public class Document {
 		for (Category cat : allCategories) {
 			resultsByClass.put(cat, new ResultSet());
 		}
-		for (int i=0; i < true_mask.length; i ++) {
-			true_mask[i].assigned(test_mask[i], full_text.substring(i, i+1), resultsByClass, categoryExceptions);
+		for (int i=0; i < trueMask.length; i ++) {
+			trueMask[i].assigned(testMask[i], fullText.get(i), resultsByClass, categoryExceptions);
 		}
 		
 		return resultsByClass;			
