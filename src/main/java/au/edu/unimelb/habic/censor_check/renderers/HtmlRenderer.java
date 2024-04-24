@@ -68,6 +68,16 @@ public class HtmlRenderer {
 		builder.append(results.falseNegative());
 		builder.append("</td>");
 		
+		builder.append("<td>");
+		for (Map.Entry<String, Integer> missCat : results.classMissBreakDown().entrySet()) {
+			builder.append('(');
+			builder.append(missCat.getKey());
+			builder.append(',');
+			builder.append(missCat.getKey());
+			builder.append(')');
+		}
+		builder.append("</td>");
+		
 		
 		builder.append("</tr>");
 	}
@@ -108,6 +118,10 @@ public class HtmlRenderer {
 		
 		builder.append("<td>");
 		builder.append("False Negatives");
+		builder.append("</td>");
+		
+		builder.append("<td>");
+		builder.append("Class Miss Breakdown");
 		builder.append("</td>");
 		
 		
