@@ -73,7 +73,7 @@ public class HtmlRenderer {
 			builder.append('(');
 			builder.append(missCat.getKey());
 			builder.append(',');
-			builder.append(missCat.getKey());
+			builder.append(missCat.getValue());
 			builder.append(')');
 		}
 		builder.append("</td>");
