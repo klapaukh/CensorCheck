@@ -26,7 +26,7 @@ public class Document {
 	private Set<Category> allCategories;
 	
 	/** Create a new Record from a file on disk **/
-	public Document(File sourceFile) throws IOException {
+	public Document(File sourceFile, Config config) throws IOException {
 		if (!sourceFile.isFile() && sourceFile.canRead()) {
 			throw new FileNotFoundException(sourceFile.getAbsolutePath() + " is not a reable file");
 		}
@@ -46,12 +46,12 @@ public class Document {
 			reader.close();
 		}
 		
-		this.init(sourceFile.getName(), builder.toString());
+		this.init(sourceFile.getName(), builder.toString(), config);
 	}
 	
 	/** Create a new Record based on the data that would be stored on disk */
-	public Document(String filename, String contents) {
-		this.init(filename, contents);
+	public Document(String filename, String contents, Config config) {
+		this.init(filename, contents, config);
 	}
 	
 	/**
@@ -59,14 +59,21 @@ public class Document {
 	 * @param filename The filename of the source document.
 	 * @param contents The full text of the document.
 	 */
-	private void init(String filename, String contents) {
+	private void init(String filename, String contents, Config config) {
 		fullText = new ArrayList<>();
 		
-		BreakIterator boundary = BreakIterator.getCharacterInstance();
-		boundary.setText(contents);
-		for(int start = boundary.first(), end = boundary.next(); end != BreakIterator.DONE; start = end, end = boundary.next()) {
-			fullText.add(contents.substring(start, end));
+		if (config.useUnicode()) {
+			BreakIterator boundary = BreakIterator.getCharacterInstance();
+			boundary.setText(contents);
+			for(int start = boundary.first(), end = boundary.next(); end != BreakIterator.DONE; start = end, end = boundary.next()) {
+				fullText.add(contents.substring(start, end));
+			}
+		} else {
+			for(int start = 0; start < contents.length(); start++) {
+				fullText.add(contents.substring(start, start+1));
+			}
 		}
+		
 		
 		allCategories = new HashSet<>();
 		allCategories.add(Category.NONE);

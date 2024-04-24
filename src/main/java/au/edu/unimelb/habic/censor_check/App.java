@@ -31,7 +31,7 @@ public class App {
 		for (FileTuple file : config.listFiles()) {
 			Document record;
 			try {
-				record = new Document(file.fullTextFile);
+				record = new Document(file.fullTextFile, config);
 			} catch (IOException e) {
 				throw new RuntimeException("Could not read full text file " + file.fullTextFile.getAbsolutePath(), e);
 			}

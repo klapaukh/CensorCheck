@@ -31,6 +31,9 @@ public class Config {
 	@Parameter(names = { "-c", "--config" }, description = "Path the categories config file if used")
 	private String categoriesConfig;
 
+	@Parameter(names = { "-u", "--unicode"}, description = "Split characters by unicode glyph instead of java chars. This will depend on your annotation tooling.")
+	private boolean unicodeCharacters;
+	
 	/**
 	 * File extension for annotation files.
 	 */
@@ -106,5 +109,18 @@ public class Config {
 			}
 		}
 		return conf;
+	}
+	
+	/**
+	 * Return if character splitting in the document should be unicode glyph based,
+	 * instead of character based.
+	 * @return
+	 */
+	public boolean useUnicode() {
+		return this.unicodeCharacters;
+	}
+	
+	void setUnicode(boolean useUnicode) {
+		this.unicodeCharacters = useUnicode;
 	}
 }
