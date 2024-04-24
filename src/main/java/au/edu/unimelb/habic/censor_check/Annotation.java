@@ -89,7 +89,7 @@ public class Annotation {
 		} else {
 			// Class mismatch, but tokens caught
 			resultsByClass.get(this.category).addTruePositive();
-			resultsByClass.get(this.category).addClassMiss();
+			resultsByClass.get(this.category).addClassMiss(other.category.category);
 		}
 	}
 }

@@ -1,5 +1,9 @@
 package au.edu.unimelb.habic.censor_check;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Class to keep track of the classification statistics. 
  */
@@ -9,7 +13,7 @@ public class ResultSet implements Cloneable {
 	private int falsePositives;
 	private int trueNegatives;
 	private int falseNegatives;
-	private int classMiss;
+	private Map<String, Integer> classMiss;
 
 	/**
 	 * Create a new Result set. It will have all zero values.
@@ -19,7 +23,7 @@ public class ResultSet implements Cloneable {
 		falsePositives = 0;
 		trueNegatives = 0;
 		falseNegatives = 0;
-		classMiss = 0;
+		classMiss = new HashMap<>();
 	}
 	
 	/**
@@ -30,12 +34,12 @@ public class ResultSet implements Cloneable {
 	 * @param falseNegatives
 	 * @param classMiss
 	 */
-	public ResultSet(int truePositives, int falsePositives, int trueNegatives, int falseNegatives, int classMiss) {
+	public ResultSet(int truePositives, int falsePositives, int trueNegatives, int falseNegatives, Map<String, Integer> classMiss) {
 		this.truePositives = truePositives;
 		this.falsePositives = falsePositives;
 		this.trueNegatives = trueNegatives;
 		this.falseNegatives = falseNegatives;
-		this.classMiss = classMiss;
+		this.classMiss = new HashMap<>(classMiss);
 	}
 
 	/**
@@ -69,8 +73,12 @@ public class ResultSet implements Cloneable {
 	/**
 	 * Record a class miss (this is typically paired with a true positive).
 	 */
-	public void addClassMiss() {
-		classMiss++;
+	public void addClassMiss(String detectedCategory) {
+		if (classMiss.containsKey(detectedCategory)) {
+			classMiss.put(detectedCategory, classMiss.get(detectedCategory) + 1);
+		} else {
+			classMiss.put(detectedCategory, 1);
+		}
 	}
 
 	public int truePositives() {
@@ -90,7 +98,11 @@ public class ResultSet implements Cloneable {
 	}
 
 	public int classMiss() {
-		return classMiss;
+		return classMiss.values().stream().reduce(0, (a,b) -> a + b);
+	}
+	
+	public Map<String, Integer> classMissBreakDown() {
+		return Collections.unmodifiableMap(this.classMiss);
 	}
 	
 	@Override
@@ -104,7 +116,15 @@ public class ResultSet implements Cloneable {
 	 * @return A new ResultSet containing the sum of the values.
 	 */
 	public ResultSet add(ResultSet other) {
-		return new ResultSet(other.truePositives + truePositives, other.falsePositives + falsePositives, other.trueNegatives + trueNegatives, other.falseNegatives + falseNegatives, other.classMiss + classMiss);
+		Map<String, Integer> newClassMiss = new HashMap<String, Integer>(this.classMiss);
+		for (Map.Entry<String, Integer> entry : other.classMiss.entrySet()) {
+			if (newClassMiss.containsKey(entry.getKey())) {
+				newClassMiss.put(entry.getKey(), newClassMiss.get(entry.getKey()) + entry.getValue());
+			} else {
+				newClassMiss.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return new ResultSet(other.truePositives + truePositives, other.falsePositives + falsePositives, other.trueNegatives + trueNegatives, other.falseNegatives + falseNegatives, newClassMiss);
 	}
 	
 	@Override
